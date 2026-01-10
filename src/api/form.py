@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.domain.models import Form, ParticipationFormat
+from domain.models import Form, ParticipationFormat
 
 from sqlmodel import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.core import get_session
-from src.db.models import Participant, Team
+from db.core import get_session
+from db.models import Participant, Team
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
         telegram=getattr(form, "telegram", None),
         phone=form.phone,
         university_id=getattr(form, "university_id", None),
-        preferred_category=(
+        category_id=(
             str(form.category_id)
             if getattr(form, "category_id", None) is not None
             else None
@@ -36,9 +36,10 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
         source=(form.source or getattr(form, "otherSource", None)),
         comment=getattr(form, "comment", None),
         personal_data_consent=bool(getattr(form, "personal_data_consent", False)),
-        photo_consent=bool(getattr(form, "photoConsent", False)),
+        skills_text=",".join(form.skills) if form.skills else "",
     )
 
+    
     # if user has no team, just create participant
     if not form.has_team:
         session.add(participant)
@@ -56,7 +57,7 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
 
     # try to find existing team
     result = await session.execute(
-        select(Team).where(Team.team_name == team_name, Team.category == category)
+        select(Team).where(Team.team_name == team_name, Team.category_id == category)
     )
     existing = result.scalars().first()
 
@@ -64,7 +65,7 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
         participant.team_id = existing.id
         session.add(participant)
         await session.commit()
-        return {"message": "Joined existing team", "data": form.dict()}
+        return {"message": "Joined existing team", "data": form.model_dump()}
 
     # If no existing team, only a team leader can create a new one
     if not form.team_leader:
@@ -80,7 +81,7 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
         # race: another request created the team concurrently -> fetch it
         await session.rollback()
         result = await session.execute(
-            select(Team).where(Team.team_name == team_name, Team.category == category)
+            select(Team).where(Team.team_name == team_name, Team.category_id == category)
         )
         existing = result.scalars().first()
         if existing is None:
@@ -88,11 +89,11 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
         participant.team_id = existing.id
         session.add(participant)
         await session.commit()
-        return {"message": "Joined existing team", "data": form.dict()}
+        return {"message": "Joined existing team", "data": form.model_dump()}
 
     # success: associate participant with freshly created team
     await session.refresh(new_team)
     participant.team_id = new_team.id
     session.add(participant)
     await session.commit()
-    return {"message": "Team created and participant added", "data": form.dict()}
+    return {"message": "Team created and participant added", "data": form.model_dump()}

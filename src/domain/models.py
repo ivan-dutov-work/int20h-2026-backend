@@ -11,12 +11,17 @@ class StudyYear(IntEnum):
     YEAR_4 = 4
     YEAR_5 = 5
     YEAR_6 = 6
+    GRADUATED = 7
 
     def __str__(self):
         if self <= 4:
             return f"{self.value} курс"
+        elif self == 5:
+            return "1 магістр"
+        elif self == 6:
+            return "2 магістр"
         else:
-            return f"{self.value} курс магістр"
+            return "Закінчив"
 
 
 def normalize_phone_number(number: str) -> str:
@@ -57,13 +62,13 @@ class Form(BaseModel):
         int, Field(description="The category of interest for the user")
     ]
 
-    # study_year: Annotated[
-    #     StudyYear, Field(description="The current year of study of the user")
-    # ]
+    study_year: Annotated[
+        StudyYear, Field(description="The current year of study of the user")
+    ]
 
-    # technologies: Annotated[
-    #     str, Field(description="Technologies the user is proficient at")
-    # ]
+    skills: Annotated[
+        list[str], Field(description="List of skills the user has")
+    ]
 
     format: Annotated[
         ParticipationFormat,
@@ -102,8 +107,4 @@ class Form(BaseModel):
 
     personal_data_consent: Annotated[
         Literal[True], Field(description="Consent for personal data processing")
-    ]
-
-    photoConsent: Annotated[
-        Literal[True], Field(description="Consent for photo and video recording")
     ]

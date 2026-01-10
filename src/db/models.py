@@ -60,6 +60,7 @@ class Participant(SQLModel, table=True):
     email: str = Field(unique=True, index=True)  # <--- Added Unique
     telegram: Optional[str] = None
     phone: str
+    study_year: Optional[int] = Field(default=None)
 
     # University Reference
     university_id: Optional[int] = Field(default=None, foreign_key="universities.id")
@@ -97,3 +98,6 @@ class Participant(SQLModel, table=True):
     # Legal
     personal_data_consent: bool = Field(default=False)
     photo_consent: bool = Field(default=False)
+
+    # Skills
+    skills_text: Optional[str] = None

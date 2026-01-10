@@ -6,11 +6,12 @@ from dotenv import load_dotenv
 import json
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.config import Settings
-from src.db.core import make_engine, make_session_factory, init_db
-from src.api.form import router as form_router
-from src.api.unis import router as unis_router
-from src.api.categories import router as categories_router
+from config import Settings
+from db.core import make_engine, make_session_factory, init_db
+from api.form import router as form_router
+from api.unis import router as unis_router
+from api.categories import router as categories_router
+from api.skills import router as skills_router
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,7 @@ app.add_middleware(
 app.include_router(form_router)
 app.include_router(unis_router)
 app.include_router(categories_router)
+app.include_router(skills_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
