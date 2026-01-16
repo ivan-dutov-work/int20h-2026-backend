@@ -9,12 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.core import get_session
 from db.models import Participant, Team, University, Category
 
+from logging_singleton import get_logger
+
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @router.post("/form/")
 async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
-    # 1. Validate constraints (Email & Telegram)
     # Check if user already exists
     stmt_check_user = select(Participant).where(
         (Participant.email == form.email) | (Participant.telegram == form.telegram)
@@ -24,10 +26,16 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
 
     if existing_user:
         if existing_user.email == form.email:
+            logger.warning(
+                "Registration failed: email already registered: %s", form.email
+            )
             raise HTTPException(
                 status_code=400, detail="Користувач з таким email вже зареєстрований"
             )
         if existing_user.telegram == form.telegram:
+            logger.warning(
+                "Registration failed: telegram already registered: %s", form.telegram
+            )
             raise HTTPException(
                 status_code=400, detail="Користувач з таким telegram вже зареєстрований"
             )
@@ -36,10 +44,20 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
     # These checks ensure we don't get generic 500 errors for bad IDs
     university = await session.get(University, form.university_id)
     if not university:
+        logger.warning(
+            "Registration failed: university not found id=%s email=%s",
+            form.university_id,
+            form.email,
+        )
         raise HTTPException(status_code=400, detail="Вказаний університет не знайдено")
 
     category = await session.get(Category, form.category_id)
     if not category:
+        logger.warning(
+            "Registration failed: category not found id=%s email=%s",
+            form.category_id,
+            form.email,
+        )
         raise HTTPException(status_code=400, detail="Вказана категорія не знайдена")
 
     # 3. Prepare Participant
@@ -58,7 +76,7 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
         cv_url=form.cv,
         linkedin=form.linkedin,
         work_consent=form.work_consent,
-        source=(form.source or form.otherSource),
+        source=(str(form.otherSource) if form.source == "otherSocial" else form.source),
         comment=form.comment,
         personal_data_consent=form.personal_data_consent,
         skills_text=",".join(form.skills) if form.skills else "",
@@ -70,7 +88,13 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
     if form.has_team:
         team_name = form.team_name
         if not team_name:
-            raise HTTPException(status_code=400, detail="Ви повинні вказати назву команди")
+            logger.warning(
+                "Registration failed: has_team is True but no team_name provided. email=%s",
+                form.email,
+            )
+            raise HTTPException(
+                status_code=400, detail="Ви повинні вказати назву команди"
+            )
 
         # Check existing team
         stmt_team = select(Team).where(Team.team_name == team_name)
@@ -79,19 +103,31 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
 
         if existing_team:
             if existing_team.category_id != form.category_id:
+                logger.warning(
+                    "Registration failed: team name exists in other category. team_name=%s existing_category=%s requested_category=%s email=%s",
+                    team_name,
+                    existing_team.category_id,
+                    form.category_id,
+                    form.email,
+                )
                 raise HTTPException(
                     status_code=400,
-                    detail="Присутня команда з такою назвою в іншій категорії. Пересвідчіться, що ви правильно вказали назву команди. Якщо Ви переконані, що хочете створити команду, то це має зробити тімлід"
+                    detail="Присутня команда з такою назвою в іншій категорії. Пересвідчіться, що ви правильно вказали назву команди. Якщо Ви переконані, що хочете створити команду, то це має зробити тімлід",
                 )
-            
+
             # Join existing
             participant.team_id = existing_team.id
             participant.team_leader = False  # Force false if joining
             success_message = "Ви успішно приєдналися до команди"
-        
+
         else:
             # Create new team
             if not form.team_leader:
+                logger.warning(
+                    "Registration failed: attempt to create team without team_leader. team_name=%s email=%s",
+                    team_name,
+                    form.email,
+                )
                 raise HTTPException(
                     status_code=400, detail="Команду має створювати тімлід"
                 )
@@ -103,16 +139,22 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
             success_message = "Ви успішно створили команду"
 
     session.add(participant)
-    
+
     # 5. Commit
     # Since we pre-validated everything, a failure here is likely a rare race condition.
     try:
         await session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         await session.rollback()
+        logger.exception(
+            "IntegrityError while saving participant/team: email=%s telegram=%s error=%s",
+            form.email,
+            form.telegram,
+            e,
+        )
         raise HTTPException(
-            status_code=400, 
-            detail="Помилка збереження даних. Можливо, команда або користувач були створені одночасно з іншим запитом. Будь ласка, спробуйте ще раз."
+            status_code=400,
+            detail="Помилка збереження даних. Можливо, команда або користувач були створені одночасно з іншим запитом. Будь ласка, спробуйте ще раз.",
         )
 
     return {"message": success_message, "data": form.model_dump()}

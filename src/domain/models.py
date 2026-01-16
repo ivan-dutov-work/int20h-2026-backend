@@ -1,7 +1,18 @@
 from enum import Enum, IntEnum
-from pydantic import AfterValidator, BaseModel, Field, ConfigDict
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    ConfigDict,
+    field_validator,
+    model_validator,
+    ValidationError,
+)
 from typing import Annotated, Literal
 import phonenumbers
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class StudyYear(IntEnum):
@@ -48,13 +59,36 @@ class ParticipationFormat(str, Enum):
 class Form(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    full_name: Annotated[str, Field(description="The full name of the user")]
+    full_name: Annotated[
+        str,
+        Field(
+            description="The full name of the user",
+            min_length=2,
+            max_length=100,
+        ),
+    ]
 
-    email: Annotated[str, Field(description="The email address of the user")]
+    email: Annotated[
+        str,
+        Field(
+            description="The email address of the user",
+            max_length=100,
+        ),
+    ]
 
-    telegram: Annotated[str, Field(description="The Telegram handle of the user")]
+    telegram: Annotated[
+        str,
+        Field(
+            description="The Telegram handle of the user",
+            min_length=1,
+            max_length=100,
+        ),
+    ]
 
-    phone: Annotated[NormalizedPhone, Field(description="The phone number of the user")]
+    phone: Annotated[
+        NormalizedPhone,
+        Field(description="The phone number of the user", max_length=100),
+    ]
 
     university_id: Annotated[int, Field(description="The ID of the user's university")]
 
@@ -67,7 +101,8 @@ class Form(BaseModel):
     ]
 
     skills: Annotated[
-        list[str], Field(description="List of skills the user has")
+        list[Annotated[str, Field(max_length=100)]],
+        Field(description="List of skills the user has"),
     ]
 
     format: Annotated[
@@ -81,30 +116,137 @@ class Form(BaseModel):
         bool, Field(description="Whether the user is the team lead or not")
     ]
 
-    team_name: Annotated[str, Field(description="The name of the user's team")]
+    team_name: Annotated[
+        str,
+        Field(description="The name of the user's team", max_length=100),
+    ]
 
     wants_job: Annotated[
         bool, Field(description="Whether the user is looking for a job or not")
     ]
 
     job_description: Annotated[
-        str, Field(description="Description of the job the user is looking for")
+        str,
+        Field(
+            description="Description of the job the user is looking for",
+            max_length=2000,
+        ),
     ]
 
-    cv: Annotated[str, Field(description="URL to the user's CV file")]
-    linkedin: Annotated[str, Field(description="URL to the user's LinkedIn profile")]
+    cv: Annotated[
+        str,
+        Field(description="URL to the user's CV file", max_length=100),
+    ]
+    linkedin: Annotated[
+        str,
+        Field(description="URL to the user's LinkedIn profile", max_length=100),
+    ]
     work_consent: Annotated[
         bool, Field(description="Whether the user consents to work terms")
     ]
 
-    source: Annotated[str, Field(description="How the user heard about the event")]
+    source: Annotated[
+        str,
+        Field(
+            description="How the user heard about the event",
+            min_length=1,
+            max_length=100,
+        ),
+    ]
 
-    otherSource: Annotated[str | None, Field(description="Other source if applicable")]
+    otherSource: Annotated[
+        str | None,
+        Field(description="Other source if applicable", max_length=100),
+    ]
 
     comment: Annotated[
-        str | None, Field(description="Additional comments from the user")
+        str | None,
+        Field(description="Additional comments from the user", max_length=2000),
     ]
 
     personal_data_consent: Annotated[
         Literal[True], Field(description="Consent for personal data processing")
     ]
+
+    @model_validator(mode="after")
+    def validate_cross_field_constraints(self):
+        """Validate cross-field constraints as per frontend validation."""
+        # If CV or LinkedIn provided, require workConsent
+        if (self.cv and self.cv.strip()) or (self.linkedin and self.linkedin.strip()):
+            if not self.work_consent:
+                logger.warning(
+                    "Validation failed: CV/LinkedIn provided without work_consent for email=%s",
+                    self.email,
+                )
+                raise ValueError(
+                    "Потрібно надати згоду на обробку даних для передачі CV/LinkedIn."
+                )
+
+        # If wantsCV (wants_job), require cv
+        if self.wants_job:
+            if not self.cv or not self.cv.strip():
+                logger.warning(
+                    "Validation failed: wants_job=True but no cv provided for email=%s",
+                    self.email,
+                )
+                raise ValueError("Будь ласка, надайте посилання на CV.")
+            # Validate CV URL format
+            try:
+                from urllib.parse import urlparse
+
+                parsed = urlparse(self.cv)
+                if parsed.scheme not in ("http", "https"):
+                    logger.warning(
+                        "Validation failed: cv has invalid scheme for email=%s, url=%s",
+                        self.email,
+                        self.cv,
+                    )
+                    raise ValueError(
+                        "Посилання на CV має починатися з http:// або https://."
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                logger.warning(
+                    "Validation failed: cv url parsing error for email=%s, error=%s",
+                    self.email,
+                    e,
+                )
+                raise ValueError("Будь ласка, вкажіть коректне посилання на CV.")
+
+        # If LinkedIn provided, validate URL format
+        if self.linkedin and self.linkedin.strip():
+            try:
+                from urllib.parse import urlparse
+
+                parsed = urlparse(self.linkedin)
+                if parsed.scheme not in ("http", "https"):
+                    logger.warning(
+                        "Validation failed: linkedin has invalid scheme for email=%s, url=%s",
+                        self.email,
+                        self.linkedin,
+                    )
+                    raise ValueError(
+                        "Посилання на LinkedIn має починатися з http:// або https://."
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                logger.warning(
+                    "Validation failed: linkedin url parsing error for email=%s, error=%s",
+                    self.email,
+                    e,
+                )
+                raise ValueError("Будь ласка, вкажіть коректне посилання на LinkedIn.")
+
+        # If source is "other" or "otherSocial", require otherSource
+        if self.source in ("other", "otherSocial"):
+            if not self.otherSource or not self.otherSource.strip():
+                logger.warning(
+                    "Validation failed: source=%s but no otherSource provided for email=%s",
+                    self.source,
+                    self.email,
+                )
+                raise ValueError("Будь ласка, вкажіть джерело, якщо обрали 'Other'.")
+
+        return self
