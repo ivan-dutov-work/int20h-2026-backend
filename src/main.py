@@ -4,6 +4,9 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+
+load_dotenv()
+
 import json
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -31,7 +34,6 @@ def startup_db(engine):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_dotenv()
     settings = Settings()
 
     # create engine and session factory and expose on app.state
