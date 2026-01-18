@@ -71,7 +71,7 @@ async def main():
             {"name": "Web Development"},
             {"name": "Data Science"},
             {"name": "AI"},
-            {"name": "UI/UX Design"},
+            {"name": "DevOps"}
         ],
     )
 
