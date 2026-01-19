@@ -61,10 +61,6 @@ CUSTOM_ERROR_MESSAGES = {
         "string_too_long": "Посилання на LinkedIn занадто довге (максимум 100 символів)."
     },
     # --- Dropdowns / Enums / IDs ---
-    "university_id": {
-        "missing": "Будь ласка, оберіть університет.",
-        "int_parsing": "ID університету має бути числом.",
-    },
     "category_id": {
         "missing": "Будь ласка, оберіть категорію.",
         "int_parsing": "ID категорії має бути числом.",

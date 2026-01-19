@@ -95,7 +95,7 @@ class Form(BaseModel):
     ]
 
     university_id: Annotated[
-        int | None, Field(description="The ID of the user's university")
+        int | None, Field(default=None, description="The ID of the user's university")
     ]
 
     study_year: Annotated[
@@ -255,4 +255,17 @@ class Form(BaseModel):
                 )
                 raise ValueError("Будь ласка, вкажіть джерело, якщо обрали 'Other'.")
 
+        if self.is_student:
+            if self.university_id is None:
+                logger.warning(
+                    "Validation failed: is_student=True but no university_id for email=%s",
+                    self.email,
+                )
+                raise ValueError("Будь ласка, вкажіть ваш університет.")
+            if self.study_year is None:
+                logger.warning(
+                    "Validation failed: is_student=True but no study_year for email=%s",
+                    self.email,
+                )
+                raise ValueError("Будь ласка, вкажіть ваш курс навчання.")
         return self

@@ -42,14 +42,17 @@ async def submit_form(form: Form, session: AsyncSession = Depends(get_session)):
 
     # 2. Validate Foreign Keys (University & Category)
     # These checks ensure we don't get generic 500 errors for bad IDs
-    university = await session.get(University, form.university_id)
-    if not university:
-        logger.warning(
-            "Registration failed: university not found id=%s email=%s",
-            form.university_id,
-            form.email,
-        )
-        raise HTTPException(status_code=400, detail="Вказаний університет не знайдено")
+    if form.university_id is not None:
+        university = await session.get(University, form.university_id)
+        if not university:
+            logger.warning(
+                "Registration failed: university not found id=%s email=%s",
+                form.university_id,
+                form.email,
+            )
+            raise HTTPException(
+                status_code=400, detail="Вказаний університет не знайдено"
+            )
 
     category = await session.get(Category, form.category_id)
     if not category:
