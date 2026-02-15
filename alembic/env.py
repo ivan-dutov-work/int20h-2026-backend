@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from src.config import Settings
-from sqlmodel import SQLModel
 from src.db.models import (
     BigInteger as BigInteger,
     Category as Category,
@@ -31,8 +30,6 @@ from src.db.models import (
     University as University,
     datetime as datetime,
     naming_convention as naming_convention,
-    participants as participants,
-    teams as teams,
     timezone as timezone,
     utc_now as utc_now,
 )

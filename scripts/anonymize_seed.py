@@ -24,7 +24,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import List, Set, Tuple
+from typing import List, Set
 
 from faker import Faker
 

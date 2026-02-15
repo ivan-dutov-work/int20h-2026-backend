@@ -1,5 +1,4 @@
 import asyncio
-import os
 import sys
 import argparse
 from pathlib import Path
@@ -13,6 +12,7 @@ from google.genai import types
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from src.db.models import Participant
 
 load_dotenv()
 
@@ -21,9 +21,6 @@ ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 SRC_PATH = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_PATH))
-
-# Import your model
-from src.db.models import Participant
 
 # Initialize Client
 client = genai.Client()

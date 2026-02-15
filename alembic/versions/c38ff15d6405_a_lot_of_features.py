@@ -46,8 +46,16 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_team_invitations")),
     )
     with op.batch_alter_table("categories", schema=None) as batch_op:
-        batch_op.drop_constraint(batch_op.f("uq_categories_name"), type_="unique")
-        batch_op.drop_index(batch_op.f("ix_categories_name"))
+        op.execute(
+            "ALTER TABLE categories DROP CONSTRAINT IF EXISTS uq_categories_name"
+        )
+        op.execute(
+            "ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_name_key"
+        )
+        try:
+            batch_op.drop_index(batch_op.f("ix_categories_name"))
+        except Exception:
+            pass
         batch_op.create_index(batch_op.f("ix_categories_name"), ["name"], unique=True)
 
     with op.batch_alter_table("participants", schema=None) as batch_op:
@@ -89,8 +97,17 @@ def upgrade() -> None:
         )
 
     with op.batch_alter_table("universities", schema=None) as batch_op:
-        batch_op.drop_constraint(batch_op.f("uq_universities_name"), type_="unique")
-        batch_op.drop_index(batch_op.f("ix_universities_name"))
+        # tolerate system-generated constraint name or missing constraint
+        op.execute(
+            "ALTER TABLE universities DROP CONSTRAINT IF EXISTS uq_universities_name"
+        )
+        op.execute(
+            "ALTER TABLE universities DROP CONSTRAINT IF EXISTS universities_name_key"
+        )
+        try:
+            batch_op.drop_index(batch_op.f("ix_universities_name"))
+        except Exception:
+            pass
         batch_op.create_index(batch_op.f("ix_universities_name"), ["name"], unique=True)
 
     # ### end Alembic commands ###
