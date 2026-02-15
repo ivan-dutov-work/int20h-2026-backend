@@ -1,8 +1,7 @@
-import asyncio
 import pytest
 
 from sqlmodel import select
-from db import models as db_models
+from src.db import models as db_models
 
 
 @pytest.mark.asyncio
@@ -18,8 +17,8 @@ async def test_get_skills(client):
 async def test_get_categories_and_unis(
     client, session, category_factory, university_factory
 ):
-    cat = await category_factory(name="Cat A")
-    uni = await university_factory(name="Uni A", city="Kyiv")
+    await category_factory(name="Cat A")
+    await university_factory(name="Uni A", city="Kyiv")
 
     r_cat = await client.get("/categories/")
     assert r_cat.status_code == 200
@@ -196,7 +195,7 @@ async def test_get_unis_ordering(client, session, university_factory):
 @pytest.mark.asyncio
 async def test_get_categories_response_schema(client, session, category_factory):
     """GET /categories/ response should have expected schema."""
-    cat = await category_factory(name="Test Category")
+    await category_factory(name="Test Category")
 
     r = await client.get("/categories/")
     assert r.status_code == 200
@@ -216,7 +215,7 @@ async def test_get_categories_response_schema(client, session, category_factory)
 @pytest.mark.asyncio
 async def test_get_unis_response_schema(client, session, university_factory):
     """GET /unis/ response should have expected schema."""
-    uni = await university_factory(name="Test Uni", city="Kyiv")
+    await university_factory(name="Test Uni", city="Kyiv")
 
     r = await client.get("/unis/")
     assert r.status_code == 200

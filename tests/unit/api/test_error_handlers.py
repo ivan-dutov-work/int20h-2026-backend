@@ -5,7 +5,6 @@ Tests custom error handlers and Ukrainian error message delivery.
 
 import pytest
 from httpx import AsyncClient
-from pydantic import ValidationError
 
 from tests.builders import FormBuilder
 

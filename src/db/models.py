@@ -48,6 +48,7 @@ class Category(SQLModel, table=True):
     __tablename__ = "categories"  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
+    teams: List[Team] = Relationship()
 
 
 class Participant(SQLModel, table=True):

@@ -1,26 +1,15 @@
-from pathlib import Path
-import sys
-
-# ensure `src` is importable
-ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "src"
-sys.path.insert(0, str(SRC))
-
-import pytest
 import pytest_asyncio
 from sqlmodel import SQLModel
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy import event
 from httpx import AsyncClient
 from fastapi import FastAPI
-
-# import routers and DB helpers from the app
-from api.form import router as form_router
-from api.skills import router as skills_router
-from api.categories import router as categories_router
-from api.unis import router as unis_router
-from db import models as db_models
-from db.core import get_session as get_session_dep
+from src.api.form import router as form_router
+from src.api.skills import router as skills_router
+from src.api.categories import router as categories_router
+from src.api.unis import router as unis_router
+from src.db import models as db_models
+from src.db.core import get_session as get_session_dep
 
 
 @pytest_asyncio.fixture
@@ -59,8 +48,8 @@ async def test_app(async_session_factory):
     from fastapi import Request
     from fastapi.responses import JSONResponse
     from fastapi.exceptions import RequestValidationError
-    from exceptions import CUSTOM_ERROR_MESSAGES
-    from logging_singleton import get_logger
+    from src.exceptions import CUSTOM_ERROR_MESSAGES
+    from src.logging_singleton import get_logger
 
     logger = get_logger(__name__)
 

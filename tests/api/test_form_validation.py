@@ -233,7 +233,7 @@ async def test_submit_form_join_existing_team_forces_non_leader(
 ):
     """Joining existing team should force team_leader=False."""
     category = await category_factory()
-    team = await team_factory(category_id=category.id, team_name="ExistingTeam")
+    await team_factory(category_id=category.id, team_name="ExistingTeam")
 
     # Try to join as leader
     payload = (

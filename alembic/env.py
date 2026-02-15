@@ -8,8 +8,21 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from src.config import Settings
-from sqlmodel import SQLModel
-from src.db.models import *
+from src.db.models import (
+    Category as Category,
+    Enum as Enum,
+    Field as Field,
+    List as List,
+    Optional as Optional,
+    Participant as Participant,
+    ParticipationFormat as ParticipationFormat,
+    Relationship as Relationship,
+    SQLModel as SQLModel,
+    Team as Team,
+    UniqueConstraint as UniqueConstraint,
+    University as University,
+    naming_convention as naming_convention,
+)
 
 settings = Settings()
 

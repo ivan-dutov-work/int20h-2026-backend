@@ -7,7 +7,7 @@ for the Form model and related validation logic.
 import pytest
 from pydantic import ValidationError
 
-from domain.models import Form, normalize_phone_number
+from src.domain.models import Form, normalize_phone_number
 from tests.builders import FormBuilder
 
 

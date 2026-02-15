@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Participant, Team, University, Category, ParticipationFormat
+from src.db.models import Participant, Team, University, Category, ParticipationFormat
 
 
 # ========================================
@@ -376,8 +376,6 @@ async def test_participation_format_enum_stored_correctly(
     )
     session.add(p)
     await session.commit()
-
-    participant_id = p.id
 
     # Refresh from DB
     await session.refresh(p)

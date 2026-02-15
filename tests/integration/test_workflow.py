@@ -1,6 +1,6 @@
 import pytest
 from sqlmodel import select
-from db import models as db_models
+from src.db import models as db_models
 
 
 @pytest.mark.asyncio

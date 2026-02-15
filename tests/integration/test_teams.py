@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from db.models import Team, Participant
+from src.db.models import Team, Participant
 from tests.builders import FormBuilder
 
 
@@ -53,9 +53,7 @@ async def test_join_existing_team(
 ):
     """Non-leader can join existing team."""
     category = await category_factory()
-    team = await team_factory(
-        team_name="ExistingTeam", category_id=category.id
-    )
+    team = await team_factory(team_name="ExistingTeam", category_id=category.id)
 
     payload = (
         FormBuilder()
@@ -86,7 +84,7 @@ async def test_leader_joining_existing_team_forced_non_leader(
 ):
     """Leader attempting to join existing team is forced to non-leader."""
     category = await category_factory()
-    team = await team_factory(team_name="TeamA", category_id=category.id)
+    await team_factory(team_name="TeamA", category_id=category.id)
 
     payload = (
         FormBuilder()
@@ -214,7 +212,7 @@ async def test_team_different_category_error(
     cat2 = await category_factory(name="Frontend")
 
     # Create team in category 1
-    team = await team_factory(team_name="BackendTeam", category_id=cat1.id)
+    await team_factory(team_name="BackendTeam", category_id=cat1.id)
 
     # Try to join from category 2 (team doesn't exist in cat2)
     payload = (

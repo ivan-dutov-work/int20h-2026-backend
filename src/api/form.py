@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from domain.models import Form, ParticipationFormat
 
 from sqlmodel import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.core import get_session
-from db.models import Participant, Team, University, Category
+from src.domain.models import Form
+from src.db.core import get_session
+from src.db.models import Participant, Team, University, Category
 
-from logging_singleton import get_logger
+from src.logging_singleton import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)

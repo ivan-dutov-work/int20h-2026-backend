@@ -5,9 +5,7 @@ from pydantic import (
     EmailStr,
     Field,
     ConfigDict,
-    field_validator,
     model_validator,
-    ValidationError,
 )
 from typing import Annotated, Literal
 import phonenumbers
