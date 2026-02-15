@@ -3,10 +3,10 @@ from fastapi import Request
 
 from sqlmodel import SQLModel
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from . import models
 
 
 def make_engine(db_url: str) -> AsyncEngine:
@@ -24,6 +24,7 @@ async def init_db(engine: AsyncEngine):
     """
     async with engine.begin() as conn:
         # 3. Change Base.metadata -> SQLModel.metadata
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
