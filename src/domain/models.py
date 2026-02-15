@@ -2,6 +2,7 @@ from enum import Enum, IntEnum
 from pydantic import (
     AfterValidator,
     BaseModel,
+    EmailStr,
     Field,
     ConfigDict,
     field_validator,
@@ -69,7 +70,7 @@ class Form(BaseModel):
     ]
 
     email: Annotated[
-        str,
+        EmailStr,
         Field(
             description="The email address of the user",
             max_length=100,
