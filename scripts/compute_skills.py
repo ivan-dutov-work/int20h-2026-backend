@@ -3,6 +3,7 @@ import sys
 import argparse
 from pathlib import Path
 from typing import List, Optional
+import os
 
 from dotenv import load_dotenv
 from google import genai
@@ -88,11 +89,14 @@ async def process_participant(
         return True
 
 
-async def main(dry_run: bool = False, batch_size: int = 20, concurrency: int = 10):
+async def main(dry_run: bool = False, batch_size: int = 20, concurrency: int = 5):
     raw_url = "postgresql://int_backend:password@localhost:5432/int_backend"
+    if os.environ.get("DATABASE_URL"):
+        raw_url = os.environ["DATABASE_URL"]
 
     # Ensure URL is async-compatible (convert if user provided non-async URL)
     database_url = get_async_db_url(raw_url)
+    print("DATABASE_URL", database_url)
 
     # Create Async Engine
     engine = create_async_engine(database_url, echo=False)
