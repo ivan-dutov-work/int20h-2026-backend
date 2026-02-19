@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 import argparse
 from pathlib import Path
@@ -90,6 +91,8 @@ async def process_participant(
 
 async def main(dry_run: bool = False, batch_size: int = 20, concurrency: int = 10):
     raw_url = "postgresql://int_backend:password@localhost:5432/int_backend"
+    if "DATABASE_URL" in os.environ:
+        raw_url = os.environ["DATABASE_URL"]
 
     # Ensure URL is async-compatible (convert if user provided non-async URL)
     database_url = get_async_db_url(raw_url)
