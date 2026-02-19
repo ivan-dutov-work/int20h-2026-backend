@@ -9,9 +9,15 @@ from alembic import context
 
 from src.config import Settings
 from src.db.models import (
+    BigInteger as BigInteger,
     Category as Category,
+    Column as Column,
+    DateTime as DateTime,
     Enum as Enum,
     Field as Field,
+    Index as Index,
+    InvitationStatus as InvitationStatus,
+    InvitationType as InvitationType,
     List as List,
     Optional as Optional,
     Participant as Participant,
@@ -19,10 +25,17 @@ from src.db.models import (
     Relationship as Relationship,
     SQLModel as SQLModel,
     Team as Team,
+    TeamInvitation as TeamInvitation,
     UniqueConstraint as UniqueConstraint,
     University as University,
+    datetime as datetime,
     naming_convention as naming_convention,
+    timezone as timezone,
+    utc_now as utc_now,
 )
+from dotenv import load_dotenv
+
+load_dotenv()
 
 settings = Settings()
 
